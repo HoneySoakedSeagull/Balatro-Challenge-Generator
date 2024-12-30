@@ -58,7 +58,7 @@ class LuaGeneratorApp:
         self.local_frame_inner.bind('<Configure>', lambda e: self.local_canvas.config(scrollregion=self.local_canvas.bbox('all')))
 
         self.add_local_btn = ttk.Button(self.local_frame, text='Add Language', command=self.add_local)
-        self.add_local_btn.grid(row=1, column=0, padx=5, pady=5)
+        self.add_local_btn.grid(row=1, column=0, padx=5, pady=5, sticky='ew',)
 
         # Map Language Names to Lua Variable Names
         self.local_mapping = {
@@ -105,11 +105,28 @@ class LuaGeneratorApp:
         self.custom_frame_inner.bind('<Configure>', lambda e: self.custom_canvas.config(scrollregion=self.custom_canvas.bbox('all')))
 
         self.add_custom_btn = ttk.Button(self.custom_frame, text='Add Custom', command=self.add_custom)
-        self.add_custom_btn.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
+        self.add_custom_btn.grid(row=1, column=0, padx=5, pady=5, sticky='ew',)
 
         # Map Customs to Lua Variable
         self.custom_mapping = {
-            "": ""
+            "All Jokers are Eternal" : "all_eternal",
+            "Chips Cannot Exceed Current $" : "chips_dollar_cap",
+            "Debuff Played Cards" : "debuff_played_cards",         
+            "No Small Blind Reward": "no_reward_specific', value = 'Small",
+            "No Big Blind Reward": "no_reward_specific', value = 'Big",
+            "No Boss Blind Reward": "no_reward_specific', value = 'Boss",
+            "No Blind Rewards": "no_reward",
+            "No Extra Hand Money" : "no_extra_hand_money",
+            "No Interest" : "no_interest",
+            "Prices Increase Each Purchase" : "inflation",
+            "No Shop Jokers" : "no_shop_jokers",
+            "Cards are Face Down" : "flipped_cards",
+#           "Daily Challenge" : "daily", 
+            "$X per Discard" : "discard_cost",
+            "Fixed Seed" : "set_seed",
+            "Hand -1 per $X" : "minus_hand_size_per_X_dollar",
+            "Joker Slot Ante" : "set_joker_slots_ante",
+            "Eternal Ante" : "set_eternal_ante",
         }
 
         # Modifier Section
@@ -132,11 +149,17 @@ class LuaGeneratorApp:
         self.modifier_frame_inner.bind('<Configure>', lambda e: self.modifier_canvas.config(scrollregion=self.modifier_canvas.bbox('all')))
 
         self.add_modifier_btn = ttk.Button(self.modifier_frame, text='Add Modifier', command=self.add_modifier)
-        self.add_modifier_btn.grid(row=1, column=0, columnspan=2, padx=5, pady=5)
+        self.add_modifier_btn.grid(row=1, column=0, padx=5, pady=5, sticky='ew',)
 
         # Map Modifiers to Lua Variable
         self.modifier_mapping = {
-            "": ""
+            "Dollars": "dollars",
+            "Discards" : "discards",
+            "Hands" : "hands",
+            "Reroll Cost" : "reroll_cost",
+            "Joker Slots" : "joker_slots",
+            "Consumable Slots" : "consumable_slots",
+            "Hand Size" : "hand_size",
         }
 
         self.rules_btn_frame = ttk.Frame(self.rules_page)
@@ -338,27 +361,30 @@ class LuaGeneratorApp:
             "Negative": "negative",
         }
 
-        self.add_joker()  # Add initial joker entry
-
         self.joker_btn_frame = ttk.Frame(self.joker_page)
         self.joker_btn_frame.grid(row=1, column=0, padx=5, pady=5, sticky='ew')
 
         self.back_button = ttk.Button(self.joker_btn_frame, text="Back", command=self.show_rules_page)
         self.back_button.grid(row=0, column=0, padx=5, pady=5, sticky='e')
 
-        self.next_button = ttk.Button(self.joker_btn_frame, text="Next", command=self.show_card_page)
+        self.next_button = ttk.Button(self.joker_btn_frame, text="Next", command=self.show_deck_page)
         self.next_button.grid(row=0, column=4, padx=5, pady=5, sticky='w')  
 
         self.joker_btn_frame.grid_columnconfigure(2, weight=1)
 
-        # Card Page
-        self.card_page = ttk.Frame(self.root)
+        # Deck Page
+        self.deck_page = ttk.Frame(self.root)
 
-        # Deck Section
-        self.deck_frame = ttk.Frame(self.card_page)
-        self.deck_frame.grid(row=0, column=0, padx=5, pady=5, sticky='w')
+        self.deck_frame = ttk.Frame(self.deck_page)
+        self.deck_frame.grid(row=0, column=0, padx=5, pady=5, sticky='ew')
 
-        self.decklabel = ttk.Label(self.deck_frame, text="Deck:")
+        self.deck_canvas = tk.Canvas(self.deck_frame, height=322, width=399)
+        self.deck_canvas.grid(row=0, column=0, sticky='nsew')
+
+        self.deck_frame_inner = ttk.Frame(self.deck_canvas)
+        self.deck_canvas.create_window((0, 0), window=self.deck_frame_inner, anchor='nw')
+
+        self.decklabel = ttk.Label(self.deck_frame_inner, text="Deck:")
         self.decklabel.grid(row=0, column=0, padx=5, pady=5, sticky='w')
 
         self.deck_types = [
@@ -380,38 +406,32 @@ class LuaGeneratorApp:
             "Challenge",
         ]
 
-        self.deckdd = ttk.Combobox(self.deck_frame, values=self.deck_types, width=12) 
-        self.deckdd.grid(row=0, column=1, padx=5, pady=5, sticky='w')
+        self.deckdd = ttk.Combobox(self.deck_frame_inner, values=self.deck_types, width=12) 
+        self.deckdd.grid(row=0, column=1, padx=5, pady=5)
 
-        # Card Section
-        self.card_entries = []
-        self.card_frame = ttk.LabelFrame(self.card_page, text='Cards')
-        self.card_frame.grid(row=1, column=0, padx=5, pady=5, sticky='ew')
+        self.excludelabel = ttk.Label(self.deck_frame_inner, text="Suits to Exclude:")
+        self.excludelabel.grid(row=0, column=2, padx=5, pady=5, sticky='w')
 
-        self.card_scroll = ttk.Scrollbar(self.card_frame, orient='vertical')
-        self.card_scroll.grid(row=0, column=1, sticky='ns')
+        self.suits = {
+            "spades": (tk.IntVar(), '♠'),
+            "hearts": (tk.IntVar(), '♥'),
+            "clubs": (tk.IntVar(), '♣'),
+            "diamonds": (tk.IntVar(), '♦')
+        }
 
-        self.card_canvas = tk.Canvas(self.card_frame, yscrollcommand=self.card_scroll.set, height=227)
-        self.card_canvas.grid(row=0, column=0, sticky='nsew')
+        # Configure the column for the label
+        self.deck_frame_inner.grid_columnconfigure(0, weight=0)
 
-        self.card_scroll.config(command=self.card_canvas.yview)
+        # Configure the columns for the checkboxes
+        for index in range(len(self.suits)):
+            self.deck_frame_inner.grid_columnconfigure(index + 1, weight=1)  # Giving equal weight
 
-        self.card_frame_inner = ttk.Frame(self.card_canvas)
-        self.card_canvas.create_window((0, 0), window=self.card_frame_inner, anchor='nw')
+        for index, (suit, (var, label)) in enumerate(self.suits.items()):
+            cb = ttk.Checkbutton(self.deck_frame_inner, text=label, variable=var, command=self.limit_checkboxes)
+            cb.grid(row=0, column=index + 3, padx=(5, 5), pady=5, sticky='ew')  # Use 'ew' for east-west stretching
 
-        self.card_scroll.bind('<Configure>', lambda e: self.card_scroll.config(command=self.card_canvas.yview))
-        self.card_frame_inner.bind('<Configure>', lambda e: self.card_canvas.config(scrollregion=self.card_canvas.bbox('all')))
-
-        self.add_card_btn = ttk.Button(self.card_frame, text='Add Card', command=self.add_card)
-        self.add_card_btn.grid(row=1, column=0, padx=5, pady=5, sticky='ew')
-
-        # Map Suit Names to Lua Variable Names
-        self.suit_mapping = {
-            "Hearts": "H",
-            "Diamonds": "D",
-            "Spades": "S",
-            "Clubs": "C",
-        }  
+        self.limit_checkboxes()
+        
 
         # Map Rank Names to Lua Variable Names
         self.rank_mapping = {
@@ -430,6 +450,9 @@ class LuaGeneratorApp:
             "Ace": "A",
         }  
 
+        self.enhancementlabel = ttk.Label(self.deck_frame_inner, text="Enhancement:")
+        self.enhancementlabel.grid(row=1, column=0, padx=5, pady=5, sticky='w')
+
         # Map Enhancement Names to Lua Variable Names
         self.enhancement_mapping = {
             "None": "",
@@ -443,7 +466,13 @@ class LuaGeneratorApp:
             "Lucky Card": "m_lucky",
         }
 
-        # Map Card Edition Names to Lua Variable Names, currently not functional
+        self.enhancementdd = ttk.Combobox(self.deck_frame_inner, values=self.enhancement_mapping, width=12) 
+        self.enhancementdd.grid(row=1, column=1, padx=5, pady=5)
+
+        self.cardeditionlabel = ttk.Label(self.deck_frame_inner, text="Edition:")
+        self.cardeditionlabel.grid(row=1, column=2, padx=5, pady=5, sticky='w')
+
+        # Map Card Edition Names to Lua Variable Names
         self.card_edition_mapping = {
             "Base": "e_base",
             "Foil": "e_foil",
@@ -451,6 +480,9 @@ class LuaGeneratorApp:
             "Polychrome": "e_polychrome",
         }    
 
+        self.cardeditiondd = ttk.Combobox(self.deck_frame_inner, values=self.card_edition_mapping, width=12) 
+        self.cardeditiondd.grid(row=1, column=3, padx=5, pady=5)
+        
         # Map Seal Names to Lua Variable Names
         self.seal_mapping = {
             "None": "",
@@ -458,14 +490,53 @@ class LuaGeneratorApp:
             "Red": "Red",
             "Blue": "Blue",
             "Purple": "Purple",
-        }        
+        }
 
-        self.add_card()  # Add initial card entry
+        # Deck Page Navigation
+        self.deck_btn_frame = ttk.Frame(self.deck_page)
+        self.deck_btn_frame.grid(row=7, column=0, padx=5, pady=5, sticky='ew')
+
+        self.back_button = ttk.Button(self.deck_btn_frame, text="Back", command=self.show_joker_page)
+        self.back_button.grid(row=0, column=0, padx=5, pady=5, sticky='e')
+
+        self.next_button = ttk.Button(self.deck_btn_frame, text="Next", command=self.show_card_page)
+        self.next_button.grid(row=0, column=4, padx=5, pady=5, sticky='w')  
+
+        self.deck_btn_frame.grid_columnconfigure(2, weight=1)
+
+        # Card Page
+        self.card_page = ttk.Frame(self.root)
+
+        # Disclaimer
+        self.warninglabel = ttk.Label(self.card_page, text="WARNING! Adding ANY cards this way for final processing will overwrite \n ALL Deck generation performed on the previous page bar Deck Type.")
+        self.warninglabel.grid(row=0, column=0, padx=5, pady=5, sticky='w')
+
+        # Card Section
+        self.card_entries = []
+        self.card_frame = ttk.LabelFrame(self.card_page, text='Cards')
+        self.card_frame.grid(row=2, column=0, padx=5, pady=5, sticky='ew')
+
+        self.card_scroll = ttk.Scrollbar(self.card_frame, orient='vertical')
+        self.card_scroll.grid(row=0, column=1, sticky='ns')
+
+        self.card_canvas = tk.Canvas(self.card_frame, yscrollcommand=self.card_scroll.set, height=224)
+        self.card_canvas.grid(row=0, column=0, sticky='nsew')
+
+        self.card_scroll.config(command=self.card_canvas.yview)
+
+        self.card_frame_inner = ttk.Frame(self.card_canvas)
+        self.card_canvas.create_window((0, 0), window=self.card_frame_inner, anchor='nw')
+
+        self.card_scroll.bind('<Configure>', lambda e: self.card_scroll.config(command=self.card_canvas.yview))
+        self.card_frame_inner.bind('<Configure>', lambda e: self.card_canvas.config(scrollregion=self.card_canvas.bbox('all')))
+
+        self.add_card_btn = ttk.Button(self.card_frame, text='Add Card', command=self.add_card)
+        self.add_card_btn.grid(row=3, column=0, padx=5, pady=5, sticky='ew')
 
         self.card_btn_frame = ttk.Frame(self.card_page)
-        self.card_btn_frame.grid(row=2, column=0, padx=5, pady=5, sticky='ew')
+        self.card_btn_frame.grid(row=4, column=0, padx=5, pady=5, sticky='ew')
 
-        self.back_button = ttk.Button(self.card_btn_frame, text="Back", command=self.show_joker_page)
+        self.back_button = ttk.Button(self.card_btn_frame, text="Back", command=self.show_deck_page)
         self.back_button.grid(row=0, column=0, padx=5, pady=5, sticky='e')
 
         self.next_button = ttk.Button(self.card_btn_frame, text="Next", command=self.show_consum_vouch_page)
@@ -473,6 +544,14 @@ class LuaGeneratorApp:
 
         self.card_btn_frame.grid_columnconfigure(2, weight=1)
 
+        # Map Suit Names to Lua Variable Names
+        self.suit_mapping = {
+            "Hearts": "H",
+            "Diamonds": "D",
+            "Spades": "S",
+            "Clubs": "C",
+        }  
+        
         # Consumables and Vouchers Page
         self.consum_vouch_page = ttk.Frame(self.root)
 
@@ -497,7 +576,7 @@ class LuaGeneratorApp:
         self.consumable_frame_inner.bind('<Configure>', lambda e: self.consumable_canvas.config(scrollregion=self.consumable_canvas.bbox('all')))
 		
         self.add_consumable_btn = ttk.Button(self.consumable_frame, text='Add Consumable', command=self.add_consumable)
-        self.add_consumable_btn.grid(row=1, column=0, padx=5, pady=5)
+        self.add_consumable_btn.grid(row=1, column=0, padx=5, pady=5, sticky='ew',)
 		
         self.consumable_mapping = {
             # Tarot Cards
@@ -558,8 +637,6 @@ class LuaGeneratorApp:
 			"Soul": "c_soul",
 			"Black Hole": "c_black_hole",           
         }
-
-        self.add_consumable()  # Add initial consumable entry
 
         # Voucher Section
         self.voucher_entries = []
@@ -645,11 +722,189 @@ class LuaGeneratorApp:
         # Restrictions Page
         self.restrictions_page = ttk.Frame(self.root)
 
-        spacer_frame = ttk.Frame(self.restrictions_page, height=301, width=413)
-        spacer_frame.grid(row=0, column=0)
+        # Banned Cards Section
+        self.banned_card_entries = []
+        self.banned_cards_frame = ttk.LabelFrame(self.restrictions_page, text='Banned Cards')
+        self.banned_cards_frame.grid(row=0, column=0, padx=5, pady=5, sticky='ew')
+
+        self.banned_cards_scroll = ttk.Scrollbar(self.banned_cards_frame, orient='vertical')
+        self.banned_cards_scroll.grid(row=0, column=1, sticky='ns')
+
+        self.banned_cards_canvas = tk.Canvas(self.banned_cards_frame, yscrollcommand=self.banned_cards_scroll.set, height=100)
+        self.banned_cards_canvas.grid(row=0, column=0, sticky='nsew')
+
+        self.banned_cards_scroll.config(command=self.banned_cards_canvas.yview)
+
+        self.banned_cards_frame_inner = ttk.Frame(self.banned_cards_canvas)
+        self.banned_cards_canvas.create_window((0, 0), window=self.banned_cards_frame_inner, anchor='nw')
+
+        self.banned_cards_scroll.bind('<Configure>', lambda e: self.banned_cards_scroll.config(command=self.banned_cards_canvas.yview))
+        self.banned_cards_frame_inner.bind('<Configure>', lambda e: self.banned_cards_canvas.config(scrollregion=self.banned_cards_canvas.bbox('all')))
+
+        self.add_banned_card_btn = ttk.Button(self.banned_cards_frame, text='Add Banned Card', command=self.add_banned_card)
+        self.add_banned_card_btn.grid(row=1, column=0, padx=5, pady=5, sticky='ew',)
+
+        # Map Packs to Lua Variable
+        self.pack_mapping = {
+            "Arcana Pack 1": "p_arcana_normal_1",
+            "Arcana Pack 2": "p_arcana_normal_2",
+            "Arcana Pack 3": "p_arcana_normal_3",
+            "Arcana Pack 4": "p_arcana_normal_4",
+            "Jumbo Arcana Pack 1": "p_arcana_jumbo_1",
+            "Jumbo Arcana Pack 2": "p_arcana_jumbo_2",
+            "Mega Arcana Pack 1": "p_arcana_mega_1",
+            "Mega Arcana Pack 2": "p_arcana_mega_2",
+            "Celestial Pack 1": "p_celestial_normal_1",
+            "Celestial Pack 2": "p_celestial_normal_2",
+            "Celestial Pack 3": "p_celestial_normal_3",
+            "Celestial Pack 4": "p_celestial_normal_4",
+            "Jumbo Celestial Pack 1": "p_celestial_jumbo_1",
+            "Jumbo Celestial Pack 2": "p_celestial_jumbo_2",
+            "Mega Celestial Pack 1": "p_celestial_mega_1",
+            "Mega Celestial Pack 2": "p_celestial_mega_2",
+            "Spectral Pack 1": "p_spectral_normal_1",
+            "Spectral Pack 2": "p_spectral_normal_2",
+            "Jumbo Spectral Pack": "p_spectral_jumbo_1",
+            "Mega Spectral Pack": "p_spectral_mega_1",
+            "Standard Pack 1": "p_standard_normal_1",
+            "Standard Pack 2": "p_standard_normal_2",
+            "Standard Pack 3": "p_standard_normal_3",
+            "Standard Pack 4": "p_standard_normal_4",
+            "Jumbo Standard Pack 1": "p_standard_jumbo_1",
+            "Jumbo Standard Pack 2": "p_standard_jumbo_2",
+            "Mega Standard Pack 1": "p_standard_mega_1",
+            "Mega Standard Pack 2": "p_standard_mega_2",
+            "Buffoon Pack 1": "p_buffoon_normal_1",
+            "Buffoon Pack 2": "p_buffoon_normal_2",
+            "Jumbo Buffoon Pack": "p_buffoon_jumbo_1",
+            "Mega Buffoon Pack": "p_buffoon_mega_1",
+        }
+
+        # Map Banned Cards to Lua Vaiable
+        self.banned_card_mapping = {**self.joker_mapping, **self.consumable_mapping, **self.voucher_mapping, **self.pack_mapping}
+
+        # Banned Tags Section
+        self.banned_tag_entries = []
+        self.banned_tags_frame = ttk.LabelFrame(self.restrictions_page, text='Banned Tags')
+        self.banned_tags_frame.grid(row=1, column=0, padx=5, pady=5, sticky='ew')
+
+        self.banned_tags_scroll = ttk.Scrollbar(self.banned_tags_frame, orient='vertical')
+        self.banned_tags_scroll.grid(row=0, column=1, sticky='ns')
+
+        self.banned_tags_canvas = tk.Canvas(self.banned_tags_frame, yscrollcommand=self.banned_tags_scroll.set, height=100)
+        self.banned_tags_canvas.grid(row=0, column=0, sticky='nsew')
+
+        self.banned_tags_scroll.config(command=self.banned_tags_canvas.yview)
+
+        self.banned_tags_frame_inner = ttk.Frame(self.banned_tags_canvas)
+        self.banned_tags_canvas.create_window((0, 0), window=self.banned_tags_frame_inner, anchor='nw')
+
+        self.banned_tags_scroll.bind('<Configure>', lambda e: self.banned_tags_scroll.config(command=self.banned_tags_canvas.yview))
+        self.banned_tags_frame_inner.bind('<Configure>', lambda e: self.banned_tags_canvas.config(scrollregion=self.banned_tags_canvas.bbox('all')))
+
+        self.add_banned_tag_btn = ttk.Button(self.banned_tags_frame, text='Add Banned Tag', command=self.add_banned_tag)
+        self.add_banned_tag_btn.grid(row=1, column=0, padx=5, pady=5, sticky='ew',)
+
+        # Map Tags to Lua Variable
+        self.tag_mapping = {
+            'Uncommon Tag': 'tag_uncommon',
+            'Rare Tag': 'tag_rare',
+            'Negative Tag': 'tag_negative',
+            'Foil Tag': 'tag_foil',
+            'Holographic Tag': 'tag_holo',
+            'Polychrome Tag': 'tag_polychrome',
+            'Investment Tag': 'tag_investment',
+            'Voucher Tag': 'tag_voucher',
+            'Boss Tag': 'tag_boss',
+            'Standard Tag': 'tag_standard',
+            'Charm Tag': 'tag_charm',
+            'Meteor Tag': 'tag_meteor',
+            'Buffoon Tag': 'tag_buffoon',
+            'Handy Tag': 'tag_handy',
+            'Garbage Tag': 'tag_garbage',
+            'Ethereal Tag': 'tag_ethereal',
+            'Coupon Tag': 'tag_coupon',
+            'Double Tag': 'tag_double',
+            'Juggle Tag': 'tag_juggle',
+            'D6 Tag': 'tag_d_six',
+            'Top-up Tag': 'tag_top_up',
+            'Skip Tag': 'tag_skip',
+            'Orbital Tag': 'tag_orbital',
+            'Economy Tag': 'tag_economy',
+        }
+
+        self.restrictions_btn_frame = ttk.Frame(self.restrictions_page)
+        self.restrictions_btn_frame.grid(row=2, column=0, padx=5, pady=5, sticky='ew')
+
+        self.back_button = ttk.Button(self.restrictions_btn_frame, text="Back", command=self.show_consum_vouch_page)
+        self.back_button.grid(row=0, column=0, padx=5, pady=5, sticky='e')
+
+        self.next_button = ttk.Button(self.restrictions_btn_frame, text="Next", command=self.show_save_page)
+        self.next_button.grid(row=0, column=4, padx=5, pady=5, sticky='w')  
+
+        self.restrictions_btn_frame.grid_columnconfigure(2, weight=1)
+
+        # Save Page
+        self.save_page = ttk.Frame(self.root)
+
+        # Banned Others Section
+        self.banned_other_entries = []
+        self.banned_others_frame = ttk.LabelFrame(self.save_page, text='Banned Others')
+        self.banned_others_frame.grid(row=0, column=0, padx=5, pady=5, sticky='ew')
+
+        self.banned_others_scroll = ttk.Scrollbar(self.banned_others_frame, orient='vertical')
+        self.banned_others_scroll.grid(row=0, column=1, sticky='ns')
+
+        self.banned_others_canvas = tk.Canvas(self.banned_others_frame, yscrollcommand=self.banned_others_scroll.set, height=232)
+        self.banned_others_canvas.grid(row=0, column=0, sticky='nsew')
+
+        self.banned_others_scroll.config(command=self.banned_others_canvas.yview)
+
+        self.banned_others_frame_inner = ttk.Frame(self.banned_others_canvas)
+        self.banned_others_canvas.create_window((0, 0), window=self.banned_others_frame_inner, anchor='nw')
+
+        self.banned_others_scroll.bind('<Configure>', lambda e: self.banned_others_scroll.config(command=self.banned_others_canvas.yview))
+        self.banned_others_frame_inner.bind('<Configure>', lambda e: self.banned_others_canvas.config(scrollregion=self.banned_others_canvas.bbox('all')))
+
+        self.add_banned_other_btn = ttk.Button(self.banned_others_frame, text='Add Banned Other', command=self.add_banned_other)
+        self.add_banned_other_btn.grid(row=1, column=0, padx=5, pady=5, sticky='ew',)
+
+        # Map Others to Lua Variable
+        self.other_mapping = {
+            "Small Blind": "bl_small",
+            "Big Blind": "bl_big",
+            "The Ox": "bl_ox",
+            "The Hook": "bl_hook",
+            "The Mouth": "bl_mouth",
+            "The Fish": "bl_fish",
+            "The Club": "bl_club",
+            "The Manacle": "bl_manacle",
+            "The Tooth": "bl_tooth",
+            "The Wall": "bl_wall",
+            "The House": "bl_house",
+            "The Mark": "bl_mark",
+            "Cerulean Bell": "bl_final_bell",
+            "The Wheel": "bl_wheel",
+            "The Arm": "bl_arm",
+            "The Psychic": "bl_psychic",
+            "The Goad": "bl_goad",
+            "The Water": "bl_water",
+            "The Eye": "bl_eye",
+            "The Plant": "bl_plant",
+            "The Needle": "bl_needle",
+            "The Head": "bl_head",
+            "Verdant Leaf": "bl_final_leaf",
+            "Violet Vessel": "bl_final_vessel",
+            "The Window": "bl_window",
+            "The Serpent": "bl_serpent",
+            "The Pillar": "bl_pillar",
+            "The Flint": "bl_flint",
+            "Amber Acorn": "bl_final_acorn",
+            "Crimson Heart": "bl_final_heart",
+        }
 
         # Save Button
-        self.save_btn_frame = ttk.Frame(self.restrictions_page)
+        self.save_btn_frame = ttk.Frame(self.save_page)
         self.save_btn_frame.grid(row=1, column=0, padx=5, pady=5)
 
         self.save_btn = ttk.Button(self.save_btn_frame, text='Save to Lua File', command=self.save_to_file)
@@ -675,10 +930,10 @@ class LuaGeneratorApp:
         self.SMODS_var.trace_add('write', update_output)  
         self.BUCB_var.trace_add('write', update_output)
 
-        self.restrictions_btn_frame = ttk.Frame(self.restrictions_page)
-        self.restrictions_btn_frame.grid(row=2, column=0, padx=5, pady=5)
+        self.save_page_btn_frame = ttk.Frame(self.save_page)
+        self.save_page_btn_frame.grid(row=2, column=0, padx=5, pady=5)
 
-        self.back_button = ttk.Button(self.restrictions_btn_frame, text="Back", command=self.show_consum_vouch_page)
+        self.back_button = ttk.Button(self.save_page_btn_frame, text="Back", command=self.show_restrictions_page)
         self.back_button.grid(row=0, column=0, padx=5, pady=5, sticky='w')
 
         
@@ -693,11 +948,27 @@ class LuaGeneratorApp:
 
     def show_joker_page(self):
         self.rules_page.pack_forget()
-        self.card_page.pack_forget()
+        self.deck_page.pack_forget()
         self.joker_page.pack(padx=10, pady=10, fill='both', expand=True)
 
-    def show_card_page(self):
+    def show_deck_page(self):
         self.joker_page.pack_forget()
+        self.card_page.pack_forget()
+        self.deck_page.pack(padx=10, pady=10, fill='both', expand=True)
+
+    def limit_checkboxes(self):
+        checked_count = sum(var.get() for var, _ in self.suits.values())
+
+        if checked_count > 3:
+            for var, _ in self.suits.values():
+                if var.get() == 1:
+                    var.set(0)
+                    checked_count -= 1
+                    if checked_count <= 3:
+                        break
+
+    def show_card_page(self):
+        self.deck_page.pack_forget()
         self.consum_vouch_page.pack_forget()
         self.card_page.pack(padx=10, pady=10, fill='both', expand=True)
 
@@ -708,7 +979,12 @@ class LuaGeneratorApp:
 
     def show_restrictions_page(self):
         self.consum_vouch_page.pack_forget()
+        self.save_page.pack_forget()
         self.restrictions_page.pack(padx=10, pady=10, fill='both', expand=True)
+
+    def show_save_page(self):
+        self.restrictions_page.pack_forget()
+        self.save_page.pack(padx=10, pady=10, fill='both', expand=True)
 
     def add_local(self):
         entry = LocalEntry(self.local_frame_inner, self.remove_local, self.local_mapping)
@@ -732,7 +1008,7 @@ class LuaGeneratorApp:
 
     def remove_modifier(self, entry):
         entry.destroy()
-        self.modifer_entries.remove(entry)
+        self.modifier_entries.remove(entry)
 
     def add_joker(self):
         entry = JokersEntry(self.joker_frame_inner, self.remove_joker, self.joker_mapping, self.joker_edition_mapping)
@@ -757,6 +1033,30 @@ class LuaGeneratorApp:
     def remove_consumable(self, entry):
         entry.destroy()
         self.consumable_entries.remove(entry)
+
+    def add_banned_card(self):
+        entry = BannedCardsEntry(self.banned_cards_frame_inner, self.remove_banned_card, self.banned_card_mapping)
+        self.banned_card_entries.append(entry)
+
+    def remove_banned_card(self, entry):
+        entry.destroy()
+        self.banned_card_entries.remove(entry)
+
+    def add_banned_tag(self):
+        entry = BannedTagsEntry(self.banned_tags_frame_inner, self.remove_banned_tag, self.tag_mapping)
+        self.banned_tag_entries.append(entry)
+
+    def remove_banned_tag(self, entry):
+        entry.destroy()
+        self.banned_tag_entries.remove(entry)
+
+    def add_banned_other(self):
+        entry = BannedOthersEntry(self.banned_others_frame_inner, self.remove_banned_other, self.other_mapping)
+        self.banned_other_entries.append(entry)
+
+    def remove_banned_other(self, entry):
+        entry.destroy()
+        self.banned_other_entries.remove(entry)
 
     def save_to_file(self):
         file_path = filedialog.asksaveasfilename(defaultextension=".lua", filetypes=[("Lua files", "*.lua")])
@@ -866,14 +1166,24 @@ class LuaGeneratorApp:
         if self.custom_entries:
             for entry in self.custom_entries:
                 custom_name = entry.customdd.get()
-                lua_code += f"            {{id = '{custom_name}'}},\n"
+                customvalue = entry.get_custom_value()
+                custom_lua = self.custom_mapping.get(custom_name, custom_name)
+                lua_code += f"            {{id = '{custom_lua}'"
+                if customvalue:
+                    if custom_lua == 'set_seed':
+                        lua_code += f", value = '{customvalue}'"
+                    else:
+                        lua_code += f", value = {customvalue}"
+                lua_code += f"}},\n"
         lua_code += "        },\n"
+
         lua_code += "        modifiers = {\n"
         if self.modifier_entries:
             for entry in self.modifier_entries:
                 modifier_name = entry.modifierdd.get()
-                modifier_value = entry.modifiervaltxt.get()
-                lua_code += f"            {{id = '{modifier_name}', value = {modifier_value}}},"
+                modifier_value = entry.get_modifier_value()
+                modifier_lua = self.modifier_mapping.get(modifier_name, modifier_name)
+                lua_code += f"            {{id = '{modifier_lua}', value = {modifier_value}}},"
         lua_code += "        }\n"
         lua_code += "    },\n"
         
@@ -886,7 +1196,7 @@ class LuaGeneratorApp:
                 joker_lua = self.joker_mapping.get(joker_name, joker_name)
                 eternal_value = entry.eternal_var.get()
                 edition_lua = self.joker_edition_mapping.get(edition_name, edition_name)
-                lua_code += f"        {{id = '{joker_lua}', eternal = {str(eternal_value).lower()}, edition = '{edition_lua}'}} ,\n"
+                lua_code += f"        {{id = '{joker_lua}', eternal = {str(eternal_value).lower()}, edition = '{edition_lua}'}},\n"
             lua_code += "    },\n"
 
         # Generate Consumable code
@@ -895,7 +1205,7 @@ class LuaGeneratorApp:
             for entry in self.consumable_entries:
                 consumable_name = entry.consumabledd.get()
                 consumable_lua = self.consumable_mapping.get(consumable_name, consumable_name)
-                lua_code += f"        {{id = '{consumable_lua}'}} ,\n"
+                lua_code += f"        {{id = '{consumable_lua}'}},\n"
             lua_code += "    },\n"
 
         # Generate Voucher code
@@ -906,13 +1216,13 @@ class LuaGeneratorApp:
                 if base_var.get() or upgrade_var.get():
                     lua_var_list = self.voucher_mapping[title]
                     if base_var.get():
-                        lua_code += f"        {{id = '{lua_var_list[0]}'}} ,\n"
+                        lua_code += f"        {{id = '{lua_var_list[0]}'}},\n"
                     if upgrade_var.get():
-                        lua_code += f"        {{id = '{lua_var_list[1]}'}} ,\n"
+                        lua_code += f"        {{id = '{lua_var_list[1]}'}},\n"
             lua_code += "    },\n"
           
         # Generate Card code
-	lua_code += "    deck = {\n"
+        lua_code += "    deck = {\n"
         if self.card_entries:
             lua_code += "        cards = {"
             for entry in self.card_entries:
@@ -951,17 +1261,29 @@ class LuaGeneratorApp:
 
         # Generate restrictions
         lua_code += "    restrictions = {\n"
+
         lua_code += "        banned_cards = {\n"
-#        if self.banned_card_entries:
-#            for entry in self.consumable_entries:
-#                banned_card_name = entry.banned_cardsdd.get()
-#                banned_card_lua = self.consumable_mapping.get(consumable_name, consumable_name)
-#                lua_code += f"        {{id = '{consumable_lua}'}} ,\n"
-        
+        if self.banned_card_entries:
+            for entry in self.banned_card_entries:
+                banned_card_name = entry.bannedcarddd.get()
+                banned_card_lua = self.banned_card_mapping.get(banned_card_name, banned_card_name)
+                lua_code += f"            {{id = '{banned_card_lua}'}},\n"
         lua_code += "        },\n"
+
         lua_code += "        banned_tags = {\n"
+        if self.banned_tag_entries:
+            for entry in self.banned_tag_entries:
+                banned_tag_name = entry.bannedtagdd.get()
+                banned_tag_lua = self.tag_mapping.get(banned_tag_name, banned_tag_name)
+                lua_code += f"            {{id = '{banned_tag_lua}'}},\n"
         lua_code += "        },\n"
+
         lua_code += "        banned_other = {\n"
+        if self.banned_other_entries:
+            for entry in self.banned_other_entries:
+                banned_other_name = entry.bannedotherdd.get()
+                banned_other_lua = self.other_mapping.get(banned_other_name, banned_other_name)
+                lua_code += f"            {{id = '{banned_other_lua}', type = 'blind'}}\n"
         lua_code += "        }\n"
         lua_code += "    }\n"
         lua_code += "}"
@@ -971,153 +1293,166 @@ class LuaGeneratorApp:
 
         return lua_code
 
-class LocalEntry(ttk.Frame):
+class BaseEntry(ttk.Frame):
+    def __init__(self, parent, remove_callback, mapping, title=None):
+        super().__init__(parent)
+        self.remove_callback = remove_callback
+        self.mapping = list(mapping.keys())
+
+        # Initialize value placeholder
+        self.custom_value = None
+
+        max_width = self.calculate_max_width(self.mapping)
+
+        # Dropdown
+        self.dropdown = ttk.Combobox(self, values=self.mapping, width=max_width)
+        self.dropdown.grid(row=0, column=0, padx=5, pady=5)
+        self.dropdown.bind('<KeyRelease>', self.autocomplete)
+        self.dropdown.bind('<<ComboboxSelected>>', self.on_dropdown_change)
+
+        # Title Entry (for classes that require a second entry)
+        if title:
+            self.title_entry = ttk.Entry(self, width=20)
+            self.title_entry.grid(row=0, column=1, padx=5, pady=5)
+            self.title_entry.insert(0, title)
+
+        # Input Entry for custom values
+        self.input_entry = ttk.Entry(self, width=12)
+        self.input_entry.grid(row=0, column=2, padx=5, pady=5)
+        self.input_entry.grid_remove()  # Hide initially
+
+        # Remove Button
+        self.remove_btn = ttk.Button(self, text='Remove', command=self.remove)
+        self.remove_btn.grid(row=0, column=4, padx=5, pady=5)
+
+        self.pack(fill='x')
+
+    def calculate_max_width(self, items):
+        """Calculate the maximum width in characters of the dropdown entries."""
+        if not items:
+            return 20  # Default width if no items are given
+        max_length = max(len(item) for item in items)
+        return max_length   # Add some padding        
+
+    def autocomplete(self, event):
+        typed_text = self.dropdown.get()
+        if typed_text == "":
+            self.dropdown['values'] = self.mapping
+        else:
+            filtered_values = [item for item in self.mapping if typed_text.lower() in item.lower()]
+            self.dropdown['values'] = filtered_values
+            self.dropdown.set(typed_text)
+
+            if len(filtered_values) <= 3:
+                if filtered_values:
+                    self.dropdown.event_generate('<Down>')
+
+    def on_dropdown_change(self, event):
+        selected_value = self.dropdown.get()
+        # Show input_entry when the selected value contains a "-"
+        self.custom_value = None  # Reset previous value
+        if selected_value in ["$X per Discard", "Fixed Seed", "Hand -1 per $X", "Joker Slot Ante", "Eternal Ante", "Cards Are Face Down"]:
+            self.input_entry.grid()  # Show the input entry
+        else:
+            self.input_entry.grid_remove()  # Hide the input entry
+
+    def remove(self):
+        self.remove_callback(self)
+
+class LocalEntry(BaseEntry):
     def __init__(self, parent, remove_callback, local_mapping):
-        super().__init__(parent)
-        self.remove_callback = remove_callback
-        self.local_mapping = list(local_mapping.keys())
+        super().__init__(parent, remove_callback, local_mapping, 'Enter Local Title')
+        self.localdd = self.dropdown
+        if hasattr(self, 'title_entry'):
+            self.local_title = self.title_entry
 
-        # Language Name Drop Down
-        self.localdd = ttk.Combobox(self, values=self.local_mapping, width=20)
-        self.localdd.grid(row=0, column=0, padx=5, pady=5)
-        self.localdd.current(0)
-
-        # Local Title Text Box
-        self.local_title = ttk.Entry(self, width=20)
-        self.local_title.grid(row=0, column=1, padx=5, pady=5)
-        self.local_title.insert(0, "Enter Local Title")
-
-        self.remove_btn = ttk.Button(self, text='Remove', command=self.remove)
-        self.remove_btn.grid(row=0, column=3, padx=5, pady=5)
-
-        self.pack(fill='x')
-
-    def remove(self):
-        self.remove_callback(self)
-
-class CustomEntry(ttk.Frame):
+class CustomEntry(BaseEntry):
     def __init__(self, parent, remove_callback, custom_mapping):
-        super().__init__(parent)
-        self.remove_callback = remove_callback
-        self.custom_mapping = list(custom_mapping.keys())
-
-        # Modifer Name Drop Down
-        self.customdd = ttk.Combobox(self, values=self.custom_mapping, width=20)
-        self.customdd.grid(row=0, column=0, padx=5, pady=5)
-        self.customdd.current(0)
-
-        self.remove_btn = ttk.Button(self, text='Remove', command=self.remove)
-        self.remove_btn.grid(row=0, column=3, padx=5, pady=5)
-
-        self.pack(fill='x')
-
-    def remove(self):
-        self.remove_callback(self)
-
-class ModifiersEntry(ttk.Frame):
+        super().__init__(parent, remove_callback, custom_mapping)
+        self.customdd = self.dropdown
+        self.customvalue = self.input_entry.get()
+            
+    def get_custom_value(self):
+        return self.input_entry.get()
+    
+class ModifiersEntry(BaseEntry):
     def __init__(self, parent, remove_callback, modifier_mapping):
-        super().__init__(parent)
-        self.remove_callback = remove_callback
-        self.modifier_mapping = list(modifier_mapping.keys())
+        super().__init__(parent, remove_callback, modifier_mapping)
+        self.modifierdd = self.dropdown
 
-        # Modifer Name Drop Down
-        self.modifierdd = ttk.Combobox(self, values=self.modifier_mapping, width=20)
-        self.modifierdd.grid(row=0, column=0, padx=5, pady=5)
-        self.modifierdd.current(0)
+    def get_modifier_value(self):
+        return self.input_entry.get()
 
-        self.remove_btn = ttk.Button(self, text='Remove', command=self.remove)
-        self.remove_btn.grid(row=0, column=3, padx=5, pady=5)
+    def on_dropdown_change(self, event):
+        super().on_dropdown_change(event)  # Call the base method
+        selected_value = self.dropdown.get()
+        if selected_value in self.mapping:
+            self.input_entry.grid()  # Show the input entry
+        else:
+            self.input_entry.grid_remove()  # Hide if not a valid selection
 
-        self.pack(fill='x')
-
-    def remove(self):
-        self.remove_callback(self)
-
-class JokersEntry(ttk.Frame):
+class JokersEntry(BaseEntry):
     def __init__(self, parent, remove_callback, joker_mapping, joker_edition_mapping):
-        super().__init__(parent)
-        self.remove_callback = remove_callback
-        self.joker_mapping = list(joker_mapping.keys())
+        super().__init__(parent, remove_callback, joker_mapping)
         self.joker_edition_mapping = list(joker_edition_mapping.keys())
-
-        # Joker Name Drop Down
-        self.jokerdd = ttk.Combobox(self, values=self.joker_mapping, width=19)
-        self.jokerdd.grid(row=0, column=0, padx=5, pady=5)
-        self.jokerdd.current(0)
+        self.jokerdd = self.dropdown
 
         # Joker Edition Drop Down
         self.jokereddd = ttk.Combobox(self, values=self.joker_edition_mapping, width=11)
         self.jokereddd.grid(row=0, column=1, padx=5, pady=5)
         self.jokereddd.current(0)
 
-        # Joker Eternal Label
+        # Joker Eternal Checkbox
         self.eternallabel = ttk.Label(self, text="∞")
         self.eternallabel.grid(row=0, column=2, padx=5, pady=5)
 
-        # Joker Eternal Checkbox
         self.eternal_var = tk.BooleanVar()
         self.eternal = tk.Checkbutton(self, variable=self.eternal_var)
         self.eternal.grid(row=0, column=3)
-
-        self.remove_btn = ttk.Button(self, text='Remove', command=self.remove)
-        self.remove_btn.grid(row=0, column=4, padx=5, pady=5)
-
-        self.pack(fill='x')
-
-    def remove(self):
-        self.remove_callback(self)
-
 
 class CardsEntry(ttk.Frame):
     def __init__(self, parent, remove_callback, suit_mapping, rank_mapping, enhancement_mapping, seal_mapping):
         super().__init__(parent)
         self.remove_callback = remove_callback
-        self.suit_mapping = list(suit_mapping.keys())
-        self.rank_mapping = list(rank_mapping.keys())
-        self.enhancement_mapping = list(enhancement_mapping.keys())
-        self.seal_mapping = list(seal_mapping.keys())
 
-        self.suitdd = ttk.Combobox(self, values=self.suit_mapping, width=9)
-        self.suitdd.grid(row=0, column=0, padx=5, pady=5)
-        self.suitdd.current(0)
-
-        self.rankdd = ttk.Combobox(self, values=self.rank_mapping, width=6)
-        self.rankdd.grid(row=0, column=1, padx=5, pady=5)
-        self.rankdd.current(0)
-
-        self.enhancementdd = ttk.Combobox(self, values=self.enhancement_mapping, width=10)
-        self.enhancementdd.grid(row=0, column=2, padx=5, pady=5)
-        self.enhancementdd.current(0)
-
-        self.sealdd = ttk.Combobox(self, values=self.seal_mapping, width=6)
-        self.sealdd.grid(row=0, column=3, padx=5, pady=5)
-        self.sealdd.current(0)
+        self.suitdd = self.create_combobox(suit_mapping, 0)
+        self.rankdd = self.create_combobox(rank_mapping, 1)
+        self.enhancementdd = self.create_combobox(enhancement_mapping, 2)
+        self.sealdd = self.create_combobox(seal_mapping, 3)
 
         self.remove_btn = ttk.Button(self, text='Remove', command=self.remove)
         self.remove_btn.grid(row=0, column=4, padx=5, pady=5)
 
         self.pack(fill='x')
 
+    def create_combobox(self, mapping, column):
+        dropdown = ttk.Combobox(self, values=list(mapping.keys()), width=9)
+        dropdown.grid(row=0, column=column, padx=5, pady=5)
+        dropdown.current(0)
+        return dropdown
+
     def remove(self):
         self.remove_callback(self)
 
-class ConsumablesEntry(ttk.Frame):
+class ConsumablesEntry(BaseEntry):
     def __init__(self, parent, remove_callback, consumable_mapping):
-        super().__init__(parent)
-        self.remove_callback = remove_callback
-        self.consumable_mapping = list(consumable_mapping.keys())
+        super().__init__(parent, remove_callback, consumable_mapping)
+        self.consumabledd = self.dropdown
 
-        self.consumabledd = ttk.Combobox(self, values=self.consumable_mapping, width=20)
-        self.consumabledd.grid(row=0, column=0, padx=5, pady=5)
-        self.consumabledd.current(0)
+class BannedCardsEntry(BaseEntry):
+    def __init__(self, parent, remove_callback, banned_card_mapping):
+        super().__init__(parent, remove_callback, banned_card_mapping)
+        self.bannedcarddd = self.dropdown
 
-        self.remove_btn = ttk.Button(self, text='Remove', command=self.remove)
-        self.remove_btn.grid(row=0, column=3, padx=5, pady=5)
+class BannedTagsEntry(BaseEntry):
+    def __init__(self, parent, remove_callback, tag_mapping):
+        super().__init__(parent, remove_callback, tag_mapping)
+        self.bannedtagdd = self.dropdown
 
-        self.pack(fill='x')
-
-    def remove(self):
-        self.remove_callback(self)
+class BannedOthersEntry(BaseEntry):
+    def __init__(self, parent, remove_callback, other_mapping):
+        super().__init__(parent, remove_callback, other_mapping)
+        self.bannedotherdd = self.dropdown
 
 class Save(ttk.Frame):
     def __init__(self):
