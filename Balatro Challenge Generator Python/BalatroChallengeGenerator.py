@@ -677,6 +677,42 @@ class LuaGeneratorApp:
             "Paint Brush": ["v_paint_brush", "v_palette"]
         }
 
+        # Map Voucher Names to Lua Variable Names for banning vouchers
+        self.banned_voucher_mapping = {
+            "Overstock": "v_overstock_norm",
+            "Overstock Plus": "v_overstock_plus",
+            "Clearance Sale": "v_clearance_sale",
+            "Liquidation": "v_liquidation",
+            "Hone": "v_hone",
+            "Glow Up": "v_glow_up",
+            "Reroll Surplus": "v_reroll_surplus",
+            "Reroll Glut": "v_reroll_glut",
+            "Crystal Ball": "v_crystal_ball",
+            "Omen Globe": "v_omen_globe",
+            "Telescope": "v_telescope",
+            "Observatory": "v_observatory",
+            "Grabber": "v_grabber",
+            "Nacho Tong": "v_nacho_tong",
+            "Wasteful": "v_wasteful",
+            "Recyclomancy": "v_recyclomancy",
+            "Tarot Merchant": "v_tarot_merchant",
+            "Tarot Tycoon": "v_tarot_tycoon",
+            "Planet Merchant": "v_planet_merchant",
+            "Planet Tycoon": "v_planet_tycoon",
+            "Seed Money": "v_seed_money",
+            "Money Tree": "v_money_tree",
+            "Blank": "v_blank",
+            "Antimatter": "v_antimatter",
+            "Magic Trick": "v_magic_trick",
+            "Illusion": "v_illusion",
+            "Hieroglyph": "v_hieroglyph",
+            "Petroglyph": "v_petroglyph",
+            "Directors Cut": "v_directors_cut",
+            "Retcon": "v_retcon",
+            "Paint Brush": "v_paint_brush",
+            "Palette": "v_palette"
+        }
+
         # Store the BooleanVars for voucher checkbox states
         self.voucher_vars = []
 
@@ -781,7 +817,7 @@ class LuaGeneratorApp:
         }
 
         # Map Banned Cards to Lua Vaiable
-        self.banned_card_mapping = {**self.joker_mapping, **self.consumable_mapping, **self.voucher_mapping, **self.pack_mapping}
+        self.banned_card_mapping = {**self.joker_mapping, **self.consumable_mapping, **self.banned_voucher_mapping, **self.pack_mapping}
 
         # Banned Tags Section
         self.banned_tag_entries = []
